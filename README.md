@@ -35,8 +35,11 @@ sudo pacman -S base-devel cmake qt6-base qt6-declarative yt-dlp ffmpeg
 
 ### INSTALLATION: From Git
   git clone https://github.com/ChandanDasGIT/YeetDownloader.git
+  
   cd YeetDownloader
+  
   chmod +x install.sh
+  
   sudo ./install.sh
 
 ### Open App

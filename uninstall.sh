@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
+# Removes what install.sh installed (listed in build/install_manifest.txt).
 set -e
 
-if [ "$EUID" -ne 0 ]; then
-  echo "Please run as root (e.g., sudo ./uninstall.sh)"
-  exit 1
-fi
+cd "$(dirname "$0")"
 
-if [ -f "build/install_manifest.txt" ]; then
-  xargs rm -vf < build/install_manifest.txt
-  echo "YeetDownloader uninstalled successfully."
-else
+if [ ! -f "build/install_manifest.txt" ]; then
   echo "Error: build/install_manifest.txt not found."
   exit 1
 fi
+
+# (|| [ -n ...]: the manifest's last line has no newline)
+while IFS= read -r file || [ -n "$file" ]; do
+  rm -vf -- "$file"
+done < build/install_manifest.txt
+
+echo "YeetDownloader uninstalled successfully."

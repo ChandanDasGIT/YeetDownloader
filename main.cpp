@@ -2,7 +2,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickStyle>
-#include "downloader.h"
+#include "wrapper/downloadPanel/downloadPanelWrap.h"
 
 int main(int argc, char *argv[])
 {
@@ -12,12 +12,12 @@ int main(int argc, char *argv[])
     app.setApplicationName("YeetDownloader");
     app.setOrganizationName("YeetDownloader");
 
+    // Created before the engine so it outlives the QML bindings that read it.
+    downloadPanelWrap downloadPanel;
+
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("downloadPanel", &downloadPanel);
 
-    Downloader downloader;
-    engine.rootContext()->setContextProperty("downloader", &downloader);
-
-    // Module name updated here
     engine.loadFromModule("YeetDownloader", "Main");
 
     if (engine.rootObjects().isEmpty())

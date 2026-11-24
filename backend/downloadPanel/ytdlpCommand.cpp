@@ -94,6 +94,9 @@ std::vector<std::string> downloadArgs(const std::string &ytdlpPath, const std::s
     args.insert(args.end(), {"-o", "%(playlist_index|)s%(playlist_index& - |)s%(title)s [%(id)s].%(ext)s"});
     args.insert(args.end(), {"--download-archive", archivePath(folder, request.kind)});
 
+    // Members-only videos can't be downloaded without a paid membership: pass them over without asking YouTube for each
+    args.insert(args.end(), {"--match-filter", "availability!=subscriber_only"});
+
     if (!ffmpegLocation.empty())
         args.insert(args.end(), {"--ffmpeg-location", ffmpegLocation});
 

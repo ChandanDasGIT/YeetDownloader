@@ -69,6 +69,17 @@ bool YtdlpOutputParser::feedLine(const std::string &line)
         return true;
     }
 
+    if (contains(rest, "does not pass filter (availability!=subscriber_only)")) {
+        ++m_membersOnly;
+        m_status = "Skipping members-only videos (" + std::to_string(m_membersOnly) + " so far)...";
+        return true;
+    }
+
+    if (startsWith(rest, "Finished downloading playlist")) {
+        m_reachedEnd = true;
+        return false;
+    }
+
     if (contains(rest, "has already been recorded in the archive") || contains(rest, "has already been downloaded")) {
         ++m_skipped;
         return false;
@@ -107,8 +118,14 @@ void YtdlpOutputParser::finish(int exitCode, bool cancelled)
     }
 
     const int failed = failedCount();
+    const std::string membersNote = m_membersOnly == 0 ? ""
+        : " " + std::to_string(m_membersOnly) + (m_membersOnly == 1 ? " is" : " are")
+          + " members-only (YouTube only lets the channel's paying members download them).";
+
     if (m_itemCount == 0) {
-        if (exitCode == 0)
+        if (m_membersOnly > 0)
+            m_status = "Download failed: this video is members-only (YouTube only lets the channel's paying members download it).";
+        else if (exitCode == 0)
             m_status = m_skipped > 0 ? "Download Complete! (already downloaded, skipped)" : "Download Complete!";
         else
             m_status = "Download failed: " + (m_lastError.empty() ? "exit code " + std::to_string(exitCode) : m_lastError);
@@ -116,22 +133,30 @@ void YtdlpOutputParser::finish(int exitCode, bool cancelled)
     }
 
     if (exitCode == 0 && failed == 0) {
-        m_status = "Download Complete! " + std::to_string(m_itemCount) + " of " + std::to_string(m_itemCount) + " videos";
+        const int available = m_itemCount - m_membersOnly;
+        m_status = "Download Complete! " + std::to_string(available) + " of " + std::to_string(m_itemCount) + " videos";
         if (m_skipped > 0)
             m_status += " (" + std::to_string(m_skipped) + " already downloaded, skipped)";
-        m_status += ".";
+        m_status += "." + membersNote;
         return;
     }
 
     if (failed == 0) {
         m_status = "Download failed (exit code " + std::to_string(exitCode) + ")";
-    } else if (m_item < m_itemCount) {
+    } else if (!m_reachedEnd) {
         m_status = "Download failed: stopped at video " + std::to_string(m_item) + " of " + std::to_string(m_itemCount);
     } else {
-        const int done = m_itemCount - failed - m_skipped;
+        const int done = m_itemCount - failed - m_skipped - m_membersOnly;
         m_status = "Download finished with errors: " + std::to_string(done) + " downloaded, "
                  + std::to_string(m_skipped) + " skipped, " + std::to_string(failed) + " failed of "
                  + std::to_string(m_itemCount);
     }
-    m_status += m_lastError.empty() ? "." : ". Last error: " + m_lastError;
+    if (m_lastError.empty()) {
+        m_status += ".";
+    } else {
+        m_status += ". Last error: " + m_lastError;
+        if (m_lastError.back() != '.')
+            m_status += ".";
+    }
+    m_status += membersNote;
 }

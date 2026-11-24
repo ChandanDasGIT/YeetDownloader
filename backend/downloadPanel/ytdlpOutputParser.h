@@ -21,6 +21,7 @@ public:
     int itemCount() const { return m_itemCount; }
     int failedCount() const { return int(m_failedItems.size()); }
     int skippedCount() const { return m_skipped; }
+    int membersOnlyCount() const { return m_membersOnly; }
     const std::string &lastError() const { return m_lastError; }
     const std::string &status() const { return m_status; }
 
@@ -31,6 +32,8 @@ private:
     int m_item = 0;
     int m_itemCount = 0;
     int m_skipped = 0;
+    int m_membersOnly = 0;
+    bool m_reachedEnd = false; // "Finished downloading playlist" seen
     std::set<int> m_failedItems;
     std::string m_lastError;
     std::string m_status;
